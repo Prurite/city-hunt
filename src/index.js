@@ -5,13 +5,14 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 const axios = require('axios');
 
 import { PageCheckpoints } from './pageCheckpoints';
+import { PageSubmissions } from './pageSubmissions';
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 // DEBUG
 const checkpointList = [ {
     "id": "1",
     "name": "SUSTech",
-    "desc": "All points are in SUSTech",
+    "desc": "All points <strong>are</strong> in SUSTech",
     "points": [{
       "id": "1-1",
       "name": "Lecture Hall 1",
@@ -46,4 +47,30 @@ const checkpointList = [ {
       "passed": 1
     }]
   }];
-root.render(<PageCheckpoints list={checkpointList} />);
+const submissions = [ {
+  id: "U12210101-P1-1",
+  checkpoint: "1-1",
+  user: "12210101",
+  photo: "U12210101-P1-1.jpg",
+  state: "pending",
+  uploaded_time: "2022-10-06", // ISO format
+}, {
+  id: "U12210101-P1-2",
+  checkpoint: "1-2",
+  user: "12210101",
+  photo: "U12210101-P1-1.jpg",
+  state: "accepted",
+  uploaded_time: "2022-10-06", // ISO format
+  score: 6,
+  bonus: 2
+}, {
+  id: "U12210201-P1-2",
+  checkpoint: "1-2",
+  user: "12210201",
+  photo: "U12210201-P1-1.jpg",
+  state: "denied",
+  uploaded_time: "2022-10-06", // ISO format
+  fail_reason: "不符合要求"
+} ];
+// root.render(<PageCheckpoints list={checkpointList} />);
+root.render(<PageSubmissions subs={submissions} list={checkpointList}/>);

@@ -1,5 +1,5 @@
 import React from 'react';
-import ReactDOM from 'react-dom/client';
+import Parser from 'html-react-parser';
 import 'font-awesome/css/font-awesome.min.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Accordion, Button, Form, Image, InputGroup } from 'react-bootstrap';
@@ -7,10 +7,15 @@ import { MyNavbar } from './CityhuntNavbar';
 const axios = require('axios');
 
 function CheckpointDetails (props) {
+  function f(text, def) { // strong when not default
+    return text === def ? text
+      : "<strong>" + text + "</strong>";
+  }
   const point = props.point;
-  let desc = point.scores[0];
+  const dScores = [6, 5, 4, 3]; // default scores
+  let desc = f(point.scores[0], dScores[0]);
   for (let i = 1; i < point.scores.length; i++)
-    desc = desc + "/" + point.scores[i];
+    desc = desc + "/" + f(point.scores[i], dScores[i]);
   const images = point.images.map((value, index) => {
     return (
       <Image key={value} src={value} />
@@ -18,7 +23,7 @@ function CheckpointDetails (props) {
   })
   desc = desc + " " + point.desc;
   return (<div className="checkpointDetails box">
-    <p>{desc}</p>
+    <p>{Parser(desc)}</p>
     {images}
   </div>);
 }
@@ -102,7 +107,7 @@ function CheckpointGroup (props) {
   return (<Accordion.Item eventKey={"G" + group.id}>
     <Accordion.Header>{group.id} {group.name}</Accordion.Header>
     <Accordion.Body>
-      <p>{group.desc}</p>
+      <p>{Parser(group.desc)}</p>
       <Accordion>
         {checkpoints}
       </Accordion>
