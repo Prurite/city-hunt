@@ -1,9 +1,13 @@
 import React from 'react';
-import 'font-awesome/css/font-awesome.min.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Card, Button, Form, InputGroup, Col, Row, FloatingLabel }
   from 'react-bootstrap';
+import { MyNavbar } from './CityhuntNavbar';
 const axios = require('axios');
+const config = require('./config.json');
+
+// Usage: <PageSubmissions list={list} subs={subs} />
+// list: the list of 
 
 class SubmissionFilter extends React.Component {
   render() {
@@ -19,24 +23,26 @@ class SubmissionFilter extends React.Component {
           <Form.Label column sm={2}>打卡区域</Form.Label>
           <Col style={{alignSelf: "center"}}>
             {list.map((value, index) => {
-              return <Form.Check inline type="checkbox"
-                id={value.id} label={value.id + " " + value.name} />
+              return <Form.Check defaultChecked inline type="checkbox"
+                id={value.id} key={value.id} label={value.id + " " + value.name} />
             })}
           </Col>
         </Form.Group>
         <Form.Group as={Row} className="mb-1" controlId="formGroupStates">
           <Form.Label column sm={2}>状态</Form.Label>
           <Col style={{alignSelf: "center"}}>
-            {["pending", "accepted", "denied"].map((value, index) => {
+            <Form.Check defaultChecked inline type="checkbox"
+              id={"pending"} label={states["pending"]} />
+            {["accepted", "denied"].map((value, index) => {
               return <Form.Check inline type="checkbox"
-                id={value} label={states[value]} />
+                id={value} key={value} label={states[value]} />
             })}
           </Col>
         </Form.Group>
         <Form.Group as={Row} style={{marginBottom: "0"}} className="mb-3" controlId="formGroupIds">
           <Col>
             <FloatingLabel
-              controlID="floatingGroupQuery"
+              controlId="floatingGroupQuery"
               label="组号"
             >
               <Form.Control type="text" placeholder="12210101" />
@@ -44,7 +50,7 @@ class SubmissionFilter extends React.Component {
           </Col>
           <Col>
             <FloatingLabel
-              controlID="floatingPointQuery"
+              controlId="floatingPointQuery"
               label="打卡点号"
             >
               <Form.Control type="text" placeholder="1-1" />
@@ -73,7 +79,7 @@ function Submission(props) {
     : <p><strong>拒绝原因</strong> {sub.fail_reason} </p>;
   return (<Card style={{margin: "1rem"}}>
     <Card.Header>{ "组 " + sub.user + " 点 " + sub.checkpoint}</Card.Header>
-    <Card.Img src={sub.photo} style={{height: "18rem"}}/>
+    <Card.Img src={config.image_path + sub.photo} style={{height: "18rem"}}/>
     <Card.Body>
       <p><strong>打卡时间</strong> {sub.uploaded_time}</p>
       <p><strong>状态</strong> {state}</p>
@@ -93,11 +99,12 @@ function Submission(props) {
   </Card>)
 }
 
-export function PageSubmissions(props) {
+export default function PageSubmissions(props) {
   return (<>
-  <SubmissionFilter list={props.list} />
-  { props.subs.map((value, index) => {
-    return <Submission id={value.id} sub={value} />;
-  }) }
+    <MyNavbar />
+    <SubmissionFilter list={props.list} />
+    {props.subs.map((value, index) => {
+      return <Submission id={value.id} key={value.id} sub={value} />;
+    })}
   </>)
 }

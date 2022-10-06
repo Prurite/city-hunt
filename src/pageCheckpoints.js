@@ -2,9 +2,10 @@ import React from 'react';
 import Parser from 'html-react-parser';
 import 'font-awesome/css/font-awesome.min.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { Accordion, Button, Form, Image, InputGroup } from 'react-bootstrap';
+import { Accordion, Alert, Button, Form, Image, InputGroup } from 'react-bootstrap';
 import { MyNavbar } from './CityhuntNavbar';
 const axios = require('axios');
+const config = require('./config.json');
 
 function CheckpointDetails (props) {
   function f(text, def) { // strong when not default
@@ -18,7 +19,7 @@ function CheckpointDetails (props) {
     desc = desc + "/" + f(point.scores[i], dScores[i]);
   const images = point.images.map((value, index) => {
     return (
-      <Image key={value} src={value} />
+      <Image fluid key={value} src={config.image_path + value} />
     )
   })
   desc = desc + " " + point.desc;
@@ -44,10 +45,15 @@ class Checkpoint extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      details: false,
       photo: false
     }
   }
   
+  toggleDetails() {
+    this.setState({details: !this.state.details});
+  }
+
   togglePhoto() {
     this.setState({photo: !this.state.photo});
   }
@@ -77,15 +83,18 @@ class Checkpoint extends React.Component {
         {point.id} {point.name} <CheckpointState point={point} />
       </div></Accordion.Header>
       <Accordion.Body>
-        <Accordion>
-          <Accordion.Header>点位信息</Accordion.Header>
-          <Accordion.Body><CheckpointDetails point={point} /></Accordion.Body>
-        </Accordion>
+        <p>
+          <strong style={{marginRight: "1rem"}}>点位信息</strong>
+          <Button variant="primary" id={"D" + point.id} onClick={() => { this.toggleDetails() }}>
+            {detailsButtonText}
+          </Button>
+        </p>
+        {this.state.details ? <CheckpointDetails point={point} /> : null}
         <p />
         <p> <strong>当前通过人数</strong> {point.passed} </p>
         <p>
           <strong>我的打卡图片</strong> {photoAction}
-          {this.state.photo ? <Image src={point.photo} /> : null}
+          {this.state.photo ? <Image fluid src={config.image_path + point.photo} /> : null}
         </p>
         <Form> <InputGroup>
           <Form.Control type="file" />
@@ -122,9 +131,35 @@ function CheckpointList (props) {
   return <Accordion>{checkpointGroups}</Accordion>;
 }
 
-export function PageCheckpoints (props) {
+function AlertList(props) {
   return (<>
-    <MyNavbar />
-    <CheckpointList list={props.list} />
+    { props.alerts.map((value) => {
+      return <Alert key={value} variant="primary" dismissible
+        onClose={() => { props.removeAlert(value) }}>
+          {value}
+        </Alert>
+    }) }
   </>)
+}
+
+export default class PageCheckpoints extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      alerts: ["123", "456"]
+    }
+  }
+
+  removeAlert(alert) {
+    const newAlerts = this.state.alerts.filter((x) => (x != alert));
+    this.setState({alerts: newAlerts});
+  }
+
+  render() {
+    return (<>
+      <MyNavbar />
+      <AlertList alerts={this.state.alerts} removeAlert={(x) => this.removeAlert(x)} />
+      <CheckpointList list={this.props.list} />
+    </>)
+  }
 }
