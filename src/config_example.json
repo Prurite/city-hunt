@@ -1,3 +1,5 @@
 {
-    "image_path": "http://127.0.0.1:3001/"
+    "static_image_path": "/static",
+    "upload_image_path": "/uploads",
+    "api_path": "/api"
 }

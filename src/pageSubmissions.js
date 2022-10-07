@@ -2,7 +2,6 @@ import React from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Card, Button, Form, InputGroup, Col, Row, FloatingLabel }
   from 'react-bootstrap';
-import { MyNavbar } from './CityhuntNavbar';
 const axios = require('axios');
 const config = require('./config.json');
 
@@ -18,7 +17,7 @@ class SubmissionFilter extends React.Component {
       denied: "未通过"
     };
     return (
-      <Card style={{margin: "1rem", padding: "1rem"}}> <Form>
+      <Card className="p-3"> <Form>
         <Form.Group as={Row} className="mb-1" controlId="formGroupAreas">
           <Form.Label column sm={2}>打卡区域</Form.Label>
           <Col style={{alignSelf: "center"}}>
@@ -77,9 +76,9 @@ function Submission(props) {
     {sub.bonus != 0 ? `(+${sub.bonus})` : ""} </p>;
   const reason = sub.state != "denied" ? null
     : <p><strong>拒绝原因</strong> {sub.fail_reason} </p>;
-  return (<Card style={{margin: "1rem"}}>
+  return (<Card className="my-3">
     <Card.Header>{ "组 " + sub.user + " 点 " + sub.checkpoint}</Card.Header>
-    <Card.Img src={config.image_path + sub.photo} style={{height: "18rem"}}/>
+    <Card.Img src={config.upload_image_path + sub.photo} style={{height: "18rem"}}/>
     <Card.Body>
       <p><strong>打卡时间</strong> {sub.uploaded_time}</p>
       <p><strong>状态</strong> {state}</p>
@@ -100,11 +99,10 @@ function Submission(props) {
 }
 
 export default function PageSubmissions(props) {
-  return (<>
-    <MyNavbar />
+  return (<div className='m-3'>
     <SubmissionFilter list={props.list} />
     {props.subs.map((value, index) => {
       return <Submission id={value.id} key={value.id} sub={value} />;
     })}
-  </>)
+  </div>)
 }

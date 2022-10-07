@@ -236,6 +236,7 @@ const submissionSchema = new Schema({
 
 const userSchema = new Schema({
     uid: String,
+	type: String,
     password: String
 })
 ```

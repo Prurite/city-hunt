@@ -3,7 +3,6 @@ import Parser from 'html-react-parser';
 import 'font-awesome/css/font-awesome.min.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Accordion, Alert, Button, Form, Image, InputGroup } from 'react-bootstrap';
-import { MyNavbar } from './CityhuntNavbar';
 const axios = require('axios');
 const config = require('./config.json');
 
@@ -19,13 +18,13 @@ function CheckpointDetails (props) {
     desc = desc + "/" + f(point.scores[i], dScores[i]);
   const images = point.images.map((value, index) => {
     return (
-      <Image fluid key={value} src={config.image_path + value} />
+      <Image fluid key={value} src={config.static_image_path + value} />
     )
   })
   desc = desc + " " + point.desc;
   return (<div className="checkpointDetails box">
     <p>{Parser(desc)}</p>
-    {images}
+    {props.images ? images : null}
   </div>);
 }
 
@@ -45,13 +44,13 @@ class Checkpoint extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      details: false,
+      images: false,
       photo: false
     }
   }
   
-  toggleDetails() {
-    this.setState({details: !this.state.details});
+  toggleImages() {
+    this.setState({images: !this.state.images});
   }
 
   togglePhoto() {
@@ -60,8 +59,8 @@ class Checkpoint extends React.Component {
 
   render() {
     const point = this.props.point;
-    const detailsButtonText = this.state.details
-      ? "收起" : "展开";
+    const imagesButtonText = this.state.images
+      ? "收起图片" : "展开图片";
     const photoButtonText = this.state.photo
       ? "收起" : "展开";
     const photoAction = !point.photo ? null
@@ -85,20 +84,22 @@ class Checkpoint extends React.Component {
       <Accordion.Body>
         <p>
           <strong style={{marginRight: "1rem"}}>点位信息</strong>
-          <Button variant="primary" id={"D" + point.id} onClick={() => { this.toggleDetails() }}>
-            {detailsButtonText}
+          <Button variant="primary" id={"D" + point.id} onClick={() => { this.toggleImages() }}>
+            {imagesButtonText}
           </Button>
         </p>
-        {this.state.details ? <CheckpointDetails point={point} /> : null}
+        <CheckpointDetails point={point} images={this.state.images} />
         <p />
         <p> <strong>当前通过人数</strong> {point.passed} </p>
         <p>
           <strong>我的打卡图片</strong> {photoAction}
-          {this.state.photo ? <Image fluid src={config.image_path + point.photo} /> : null}
+          {this.state.photo ? <Image fluid src={config.upload_image_path + point.photo} /> : null}
         </p>
         <Form> <InputGroup>
           <Form.Control type="file" />
-          <Button variant="primary" id={"B" + point.id} type="submit">上传</Button>
+          <Button variant="primary" id={"B" + point.id} type="submit">
+            {point.state ? "重新上传" : "上传"}
+          </Button>
         </InputGroup> </Form>
         <p />
         {myTime}
@@ -156,10 +157,9 @@ export default class PageCheckpoints extends React.Component {
   }
 
   render() {
-    return (<>
-      <MyNavbar />
+    return (<div className='m-3'>
       <AlertList alerts={this.state.alerts} removeAlert={(x) => this.removeAlert(x)} />
       <CheckpointList list={this.props.list} />
-    </>)
+    </div>)
   }
 }
