@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Card, Button, Form, InputGroup, Col, Row, FloatingLabel }
   from 'react-bootstrap';
-const axios = require('axios');
-const config = require('./config.json');
+import io from 'socket.io-client';
+import throwError from './AsyncError';
+import axios from 'axios';
 
-// Usage: <PageSubmissions list={list} subs={subs} />
-// list: the list of 
+const config = require('./config.json');
+const socket = io({ path: config.api_path + "/socket.io" });
 
 class SubmissionFilter extends React.Component {
   render() {
@@ -78,7 +79,7 @@ function Submission(props) {
     : <p><strong>拒绝原因</strong> {sub.fail_reason} </p>;
   return (<Card className="my-3">
     <Card.Header>{ "组 " + sub.user + " 点 " + sub.checkpoint}</Card.Header>
-    <Card.Img src={config.upload_image_path + sub.photo} style={{height: "18rem"}}/>
+    <Card.Img src={config.upload_image_path + "/" + sub.photo} style={{height: "18rem"}}/>
     <Card.Body>
       <p><strong>打卡时间</strong> {sub.uploaded_time}</p>
       <p><strong>状态</strong> {state}</p>
@@ -98,10 +99,27 @@ function Submission(props) {
   </Card>)
 }
 
-export default function PageSubmissions(props) {
+export default function PageSubmissions() {
+  const [list, setList] = React.useState([]);
+  const [subs, setSubs] = React.useState([]);
+
+  useEffect(() => {
+    axios.get(config.api_path + '/checkpoints')
+      .then((res) => { setList(res.data); })
+      .catch((err) => { throwError(err); });
+    axios.get(config.api_path + '/submissions')
+      .then((res) => { setSubs(res.data); })
+      .catch((err) => { throwError(err); });
+    socket.on("update", (update) => {
+      axios.get(config.api_path + '/submissions')
+        .then((res) => { setSubs(res.data); });
+    })
+    return socket.off("update");
+  }, [])
+
   return (<div className='m-3'>
-    <SubmissionFilter list={props.list} />
-    {props.subs.map((value, index) => {
+    <SubmissionFilter list={list} />
+    {subs.map((value, index) => {
       return <Submission id={value.id} key={value.id} sub={value} />;
     })}
   </div>)

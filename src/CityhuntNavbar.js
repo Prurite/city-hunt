@@ -7,7 +7,7 @@ import { useAuth } from './AuthProvider';
 export default function MyNavbar() {
   const uid = useAuth().uid;
   const onLogout = useAuth().onLogout;
-  return (<Navbar bg="light" expand="lg" className="mb-3"> <Container>
+  return (<Navbar bg="light" expand="sm" className="mb-3"> <Container>
     <Navbar.Brand>Cityhunt</Navbar.Brand>
     <Navbar.Toggle aria-controls="navbar-nav" />
     <Navbar.Collapse id="navbar-nav">

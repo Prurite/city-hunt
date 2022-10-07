@@ -3,8 +3,12 @@ import Parser from 'html-react-parser';
 import 'font-awesome/css/font-awesome.min.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Accordion, Alert, Button, Form, Image, InputGroup } from 'react-bootstrap';
-const axios = require('axios');
+import io from 'socket.io-client';
+import axios from 'axios';
+import throwError from './AsyncError';
+
 const config = require('./config.json');
+const socket = io({ path: config.api_path + "/socket.io" });
 
 function CheckpointDetails (props) {
   function f(text, def) { // strong when not default
@@ -18,7 +22,7 @@ function CheckpointDetails (props) {
     desc = desc + "/" + f(point.scores[i], dScores[i]);
   const images = point.images.map((value, index) => {
     return (
-      <Image fluid key={value} src={config.static_image_path + value} />
+      <Image fluid key={value} src={config.static_image_path + "/" + value} />
     )
   })
   desc = desc + " " + point.desc;
@@ -93,7 +97,7 @@ class Checkpoint extends React.Component {
         <p> <strong>当前通过人数</strong> {point.passed} </p>
         <p>
           <strong>我的打卡图片</strong> {photoAction}
-          {this.state.photo ? <Image fluid src={config.upload_image_path + point.photo} /> : null}
+          {this.state.photo ? <Image fluid src={config.upload_image_path + "/" + point.photo} /> : null}
         </p>
         <Form> <InputGroup>
           <Form.Control type="file" />
@@ -147,8 +151,56 @@ export default class PageCheckpoints extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      alerts: ["123", "456"]
+      alerts: [],
+      list: []
     }
+    axios.get(config.api_path + '/checkpoints')
+      .then((res) => {
+        this.setState({ list: res.data })
+      })
+      .catch((err) => {
+        throwError(err);
+      })
+  }
+
+  componentDidMount() {
+    function stateText(state) {
+      if (!state)
+        return "未打卡";
+      const text = {
+        pending: "等待中",
+        accepted: "已通过",
+        denied: "未通过"
+      };
+      return text[state];
+    }
+
+    socket.on('update', (update) => {
+      console.log("Receive update " + update);
+      axios.get(config.api_path + '/checkpoint/' + update)
+        .then((res) => {
+          const newPoint = res.data;
+          let newList = this.state.list.slice();
+          let newAlert = null;
+          for (let i = 0; i < newList.length; i++)
+            for (let j = 0; j < newList[i].points.length; j++)
+              if (newList[i].points[j].id === newPoint.id) {
+                if (newList[i].points[j].state !== newPoint.state)
+                  newAlert = "打卡点 " + newPoint.id + " 的状态已从 " +
+                    stateText(newList[i].points[j].state) +
+                    " 变为 " + stateText(newPoint.state);
+                newList[i].points[j] = newPoint;
+              }
+          this.setState({
+            list: newList,
+            alerts: newAlert ? this.state.alerts.concat(newAlert) : alerts
+          });
+        })
+    })
+  }
+
+  componentWillUnmount() {
+    socket.off('update');
   }
 
   removeAlert(alert) {
@@ -159,7 +211,7 @@ export default class PageCheckpoints extends React.Component {
   render() {
     return (<div className='m-3'>
       <AlertList alerts={this.state.alerts} removeAlert={(x) => this.removeAlert(x)} />
-      <CheckpointList list={this.props.list} />
+      <CheckpointList list={this.state.list} />
     </div>)
   }
 }

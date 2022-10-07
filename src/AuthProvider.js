@@ -1,26 +1,16 @@
 import React from "react";
 import axios from "axios";
-import { Navigate, useNavigate } from "react-router-dom";
-import { Alert } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
+import throwError from "./AsyncError";
 
+const config = require("./config.json");
 const AuthContext = React.createContext(null);
 
 export function useAuth() {
   return React.useContext(AuthContext);
 };
 
-function fakeAuth() {
-  return new Promise((resolve) => {
-    setTimeout(() => resolve({
-      uid: "12210101",
-      type: "admin",
-      token: "token"
-    }), 250);
-  })
-}
-
 export function AuthProvider ({ children }) {
-
   const [uid, setUid] = React.useState(localStorage.getItem("uid"));
   const [type, setType] = React.useState(localStorage.getItem("type"));
   const [token, setToken] = React.useState(localStorage.getItem("token"));
@@ -29,13 +19,27 @@ export function AuthProvider ({ children }) {
   if (token)
     axios.defaults.headers.common["Authorization"] = `bearer ${token}`;
 
-  async function handleLogin() {
-    const {uid, type, token} = await fakeAuth();
-    localStorage.setItem("uid", uid), setUid(uid);
-    localStorage.setItem("type", type), setType(type);
-    localStorage.setItem("token", token), setToken(token);
-    axios.defaults.headers.common["Authorization"] = `bearer ${token}`;
-    navigate('/checkpoints');
+  async function handleLogin(e) {
+    e.preventDefault();
+    const req = {
+      username: e.target.username.value,
+      password: e.target.password.value
+    };
+    axios.post(config.api_path + "/login", req)
+      .then((res) => {
+        console.log(res.data);
+        const { uid, type, token, err_msg } = res.data;
+        if (!uid)
+          throw Error(err_msg);
+        localStorage.setItem("uid", uid), setUid(uid);
+        localStorage.setItem("type", type), setType(type);
+        localStorage.setItem("token", token), setToken(token);
+        axios.defaults.headers.common["Authorization"] = `bearer ${token}`;
+        navigate('/checkpoints');
+      })
+      .catch((err) => {
+        throwError(err);
+      })
   };
 
   function handleLogout() {
