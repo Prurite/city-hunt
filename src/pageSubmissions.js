@@ -3,64 +3,62 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { Card, Button, Form, InputGroup, Col, Row, FloatingLabel }
   from 'react-bootstrap';
 import io from 'socket.io-client';
-import throwError from './AsyncError';
+import useAsyncError from './AsyncError';
 import axios from 'axios';
 
 const config = require('./config.json');
 const socket = io({ path: config.api_path + "/socket.io" });
 
-class SubmissionFilter extends React.Component {
-  render() {
-    const list = this.props.list;
-    const states = {
-      pending: "待审核",
-      accepted: "已通过",
-      denied: "未通过"
-    };
-    return (
-      <Card className="p-3"> <Form>
-        <Form.Group as={Row} className="mb-1" controlId="formGroupAreas">
-          <Form.Label column sm={2}>打卡区域</Form.Label>
-          <Col style={{alignSelf: "center"}}>
-            {list.map((value, index) => {
-              return <Form.Check defaultChecked inline type="checkbox"
-                id={value.id} key={value.id} label={value.id + " " + value.name} />
-            })}
-          </Col>
-        </Form.Group>
-        <Form.Group as={Row} className="mb-1" controlId="formGroupStates">
-          <Form.Label column sm={2}>状态</Form.Label>
-          <Col style={{alignSelf: "center"}}>
-            <Form.Check defaultChecked inline type="checkbox"
-              id={"pending"} label={states["pending"]} />
-            {["accepted", "denied"].map((value, index) => {
-              return <Form.Check inline type="checkbox"
-                id={value} key={value} label={states[value]} />
-            })}
-          </Col>
-        </Form.Group>
-        <Form.Group as={Row} style={{marginBottom: "0"}} className="mb-3" controlId="formGroupIds">
-          <Col>
-            <FloatingLabel
-              controlId="floatingGroupQuery"
-              label="组号"
-            >
-              <Form.Control type="text" placeholder="12210101" />
-            </FloatingLabel>
-          </Col>
-          <Col>
-            <FloatingLabel
-              controlId="floatingPointQuery"
-              label="打卡点号"
-            >
-              <Form.Control type="text" placeholder="1-1" />
-            </FloatingLabel>
-          </Col>
-        </Form.Group>
-        <Button type="submit">过滤</Button>
-      </Form> </Card>
+function SubmissionFilter(props) {
+  const list = props.list;
+  const states = {
+    pending: "待审核",
+    accepted: "已通过",
+    denied: "未通过"
+  };
+  return (
+    <Card className="p-3"> <Form onSubmit={props.handleSubmit}>
+      <Form.Group as={Row} className="mb-1" controlId="formGroupAreas">
+        <Form.Label column sm={2}>打卡区域</Form.Label>
+        <Col style={{ alignSelf: "center" }}>
+          {list.map((value, index) => {
+            return <Form.Check defaultChecked inline type="checkbox"
+              name={"G" + value.id} key={"G" + value.id} label={value.id + " " + value.name} />
+          })}
+        </Col>
+      </Form.Group>
+      <Form.Group as={Row} className="mb-1" controlId="formGroupStates">
+        <Form.Label column sm={2}>状态</Form.Label>
+        <Col style={{ alignSelf: "center" }}>
+          <Form.Check defaultChecked inline type="checkbox"
+            name={"pending"} label={states["pending"]} />
+          {["accepted", "denied"].map((value, index) => {
+            return <Form.Check inline type="checkbox"
+              name={value} key={value} label={states[value]} />
+          })}
+        </Col>
+      </Form.Group>
+      <Form.Group as={Row} style={{ marginBottom: "0" }} className="mb-3" controlId="formGroupIds">
+        <Col>
+          <FloatingLabel
+            controlId="floatingGroupQuery"
+            label="学号（例：12210101, 12210202）"
+          >
+            <Form.Control type="text" name="uids" placeholder="12210101" />
+          </FloatingLabel>
+        </Col>
+        <Col>
+          <FloatingLabel
+            controlId="floatingPointQuery"
+            label="打卡点号（例：1-1, 1-2）"
+          >
+            <Form.Control type="text" name="pointids" placeholder="1-1" />
+          </FloatingLabel>
+        </Col>
+      </Form.Group>
+      <Button type="submit">过滤</Button>
+    </Form> </Card >
     )
-  }
 }
 
 function Submission(props) {
@@ -102,23 +100,54 @@ function Submission(props) {
 export default function PageSubmissions() {
   const [list, setList] = React.useState([]);
   const [subs, setSubs] = React.useState([]);
+  const [filter, setFilter] = React.useState({
+    checkpointGroups: [],
+    states: [],
+    checkpoints: [],
+    users: []
+  })
+  const throwError = useAsyncError();
 
   useEffect(() => {
     axios.get(config.api_path + '/checkpoints')
       .then((res) => { setList(res.data); })
       .catch((err) => { throwError(err); });
-    axios.get(config.api_path + '/submissions')
+    axios.post(config.api_path + '/submissions/query', filter)
       .then((res) => { setSubs(res.data); })
       .catch((err) => { throwError(err); });
     socket.on("update", (update) => {
-      axios.get(config.api_path + '/submissions')
+      console.log("Receive update " + update);
+      axios.get(config.api_path + '/submissions/query', filter)
         .then((res) => { setSubs(res.data); });
     })
-    return socket.off("update");
+    return () => socket.off("update");
   }, [])
 
+  function handleSubmit(e) {
+    e.preventDefault();
+    let newFilter = {
+      checkpointGroups: [],
+      states: [],
+      checkpoints: [],
+      users: []
+    };
+    for (let i of list)
+      if (e.target["G" + i.id].checked)
+        newFilter.checkpointGroups.push(i.id);
+    for (let i of ["pending", "accepted", "denied"])
+      if (e.target[i].checked)
+        newFilter.states.push(i);
+    newFilter.users = e.target.uids.value.replace(/\s+/g, '').split(',');
+    newFilter.checkpoints = e.target.pointids.value.replace(/\s+/g, '').split(',');
+    setFilter(newFilter);
+    console.log(newFilter);
+    axios.post(config.api_path + '/submissions/query', filter)
+      .then((res) => { setSubs(res.data); })
+      .catch((err) => { throwError(err); });
+  }
+
   return (<div className='m-3'>
-    <SubmissionFilter list={list} />
+    <SubmissionFilter list={list} handleSubmit={handleSubmit}/>
     {subs.map((value, index) => {
       return <Submission id={value.id} key={value.id} sub={value} />;
     })}

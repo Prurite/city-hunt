@@ -5,7 +5,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { Accordion, Alert, Button, Form, Image, InputGroup } from 'react-bootstrap';
 import io from 'socket.io-client';
 import axios from 'axios';
-import throwError from './AsyncError';
+import useAsyncError from './AsyncError';
 
 const config = require('./config.json');
 const socket = io({ path: config.api_path + "/socket.io" });
@@ -59,6 +59,10 @@ class Checkpoint extends React.Component {
 
   togglePhoto() {
     this.setState({photo: !this.state.photo});
+  }
+
+  handleSubmit() {
+
   }
 
   render() {
@@ -154,6 +158,7 @@ export default class PageCheckpoints extends React.Component {
       alerts: [],
       list: []
     }
+    const throwError = useAsyncError();
     axios.get(config.api_path + '/checkpoints')
       .then((res) => {
         this.setState({ list: res.data })

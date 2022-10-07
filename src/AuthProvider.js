@@ -1,7 +1,7 @@
 import React from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import throwError from "./AsyncError";
+import useAsyncError from "./AsyncError";
 
 const config = require("./config.json");
 const AuthContext = React.createContext(null);
@@ -20,6 +20,7 @@ export function AuthProvider ({ children }) {
     axios.defaults.headers.common["Authorization"] = `bearer ${token}`;
 
   async function handleLogin(e) {
+    const throwError = useAsyncError();
     e.preventDefault();
     const req = {
       username: e.target.username.value,
@@ -27,7 +28,6 @@ export function AuthProvider ({ children }) {
     };
     axios.post(config.api_path + "/login", req)
       .then((res) => {
-        console.log(res.data);
         const { uid, type, token, err_msg } = res.data;
         if (!uid)
           throw Error(err_msg);
