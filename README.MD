@@ -125,7 +125,7 @@ City Hunt 是由致诚团委组织，面向全校同学开展的活动。活动�
 ### 后端挂载在 `/api` 下
 
 ```
-1.  GET /checkpoints with userid 
+1.  GET /checkpoints with uid (user id)
     Return checkpoints info in json
     {[{
     	"id": "1",
@@ -146,11 +146,20 @@ City Hunt 是由致诚团委组织，面向全校同学开展的活动。活动�
           	// Read these 6 above from submissions
         },]
     },]}
+
+2.  GET /checkpoint/:checkpointid with uid
+	Return checkpoint info in json
+	{
+		"id": "1-1",
+		"name": "Lecture Hall 1",
+		"scores": [6, 5, 4, 3],
+		...
+	}
     
-2.  POST /submit/:checkpointid in img file with userid
+3.  POST /submit/:checkpointid in img file with uid
 	Create/Update submission, update all related ones and return result
 	
-3. 	POST /submissions/query in json
+4. 	POST /submissions/query in json
 	{
 		"checkpoints": ["1-1"],
 		"users": ["12210101"],
@@ -168,7 +177,7 @@ City Hunt 是由致诚团委组织，面向全校同学开展的活动。活动�
 		"bonus": 0
 	}]
 	
-4.  POST /submissions/modify in json
+5.  POST /submissions/modify in json
 	{
 		// Like the json above
 	}
@@ -176,19 +185,32 @@ City Hunt 是由致诚团委组织，面向全校同学开展的活动。活动�
 	Unchanged fields may not be in the request.
 ```
 
-User related (suggestions welcomed):
+User related
 
 ```
-5.  POST /login in json
+6.  POST /login in json
 	{
-		"userId": "12210101",
+		"uid": "12210101",
 		"password": "" // hashed
 	}
-	Return (set cookie) uid and token
+	Return in json
+	{
+		"uid": "12210101"
+		"token": "xxxxx",
+		"type": "user",
+		"err_msg": ""
+	}
 	
-6.  GET /logout
+7.  GET /logout
 	Reset uid and token
 ```
+
+Socket.io
+
+When one submission's state changes, the server emits 'update point' event
+with {point.id} message, then the client gets the new info from API
+`GET /checkpoint/:checkpointid` and update local rendering.
+For `/submissions` page, simply query the submissions again.
 
 Static files
 
@@ -259,9 +281,9 @@ const userSchema = new Schema({
 ## 项目进度
 
 - [ ] 用户系统
-    - [ ] 登录/登出的前端
+    - [x] 登录/登出的前端
     - [ ] 登录/登出的后端
-    - [ ] 在各个页面通过 cookie 获取 uid 并进行相应操作
+    - [ ] 在各个页面通过 token 获取 uid 并进行相应操作
 - [ ] 选手端 UI `/checkpoints`
     - [x] 总体框架
     - [ ] 浮动的，在有通知时展示的回到顶部按钮
