@@ -49,7 +49,8 @@ class Checkpoint extends React.Component {
     super(props);
     this.state = {
       images: false,
-      photo: false
+      photo: false,
+      selectedFile: ''
     }
   }
   
@@ -61,8 +62,28 @@ class Checkpoint extends React.Component {
     this.setState({photo: !this.state.photo});
   }
 
-  handleSubmit() {
+  handleInputChange = (e) => {
+    console.log(e.target.files[0]);
+    this.setState({ selectedFile: e.target.files[0] })
+  }
 
+  handleSubmit = (e) => {
+    e.preventDefault();
+    console.log(this.state.selectedFile);
+    const data = new FormData();
+    data.append('file', this.state.selectedFile);
+    console.log(this.state.selectedFile);
+    let url = config.api_path + "/submit/" + this.props.point.id;
+    axios.post(url, data)
+      .then(res => {
+        console.log(res);
+        if (res.status == "200")
+          window.location.reload(false);
+      })
+      .catch(err => {
+        this.props.onErr(err);
+        window.scrollTo(0, 0);
+      });
   }
 
   render() {
@@ -103,12 +124,13 @@ class Checkpoint extends React.Component {
           <strong>我的打卡图片</strong> {photoAction}
           {this.state.photo ? <Image fluid src={config.upload_image_path + "/" + point.photo} /> : null}
         </p>
-        <Form> <InputGroup>
+        {point.state != "accepted" &&
+        <Form onChange={this.handleInputChange} onSubmit={this.handleSubmit}> <InputGroup>
           <Form.Control type="file" />
           <Button variant="primary" id={"B" + point.id} type="submit">
             {point.state ? "重新上传" : "上传"}
           </Button>
-        </InputGroup> </Form>
+        </InputGroup> </Form>}
         <p />
         {myTime}
         {myState}
@@ -117,10 +139,9 @@ class Checkpoint extends React.Component {
   }
 }
 
-function CheckpointGroup (props) {
-  const group = props.group;
+function CheckpointGroup ({ group, onErr }) {
   const checkpoints = group.points.map((value, index) => {
-    return <Checkpoint key={value.id} point={value} />;
+    return <Checkpoint key={value.id} point={value} onErr={onErr} />;
   })
   return (<Accordion.Item eventKey={"G" + group.id}>
     <Accordion.Header>{group.id} {group.name}</Accordion.Header>
@@ -133,9 +154,9 @@ function CheckpointGroup (props) {
   </Accordion.Item>);
 }
 
-function CheckpointList (props) {
-  const checkpointGroups = props.list.map((value, index) => {
-    return <CheckpointGroup key={value.id} group={value} />;
+function CheckpointList ({ list, onErr }) {
+  const checkpointGroups = list.map((value, index) => {
+    return <CheckpointGroup key={value.id} group={value} onErr={onErr} />;
   })
   return <Accordion>{checkpointGroups}</Accordion>;
 }
@@ -155,17 +176,21 @@ export default class PageCheckpoints extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      err: null,
       alerts: [],
       list: []
     }
-    const throwError = useAsyncError();
     axios.get(config.api_path + '/checkpoints')
       .then((res) => {
-        this.setState({ list: res.data })
+        this.setState({ list: res.data });
       })
       .catch((err) => {
-        throwError(err);
+        this.setState({ err });
       })
+  }
+
+  setErr = (err) => {
+    this.setState({ err });
   }
 
   componentDidMount() {
@@ -201,6 +226,9 @@ export default class PageCheckpoints extends React.Component {
             alerts: newAlert ? this.state.alerts.concat(newAlert) : alerts
           });
         })
+        .catch((err) => {
+          this.setState({ err });
+        });
     })
   }
 
@@ -215,8 +243,9 @@ export default class PageCheckpoints extends React.Component {
 
   render() {
     return (<div className='m-3'>
+      {this.state.err && <Alert variant="danger">{this.state.err.toString()}</Alert>}
       <AlertList alerts={this.state.alerts} removeAlert={(x) => this.removeAlert(x)} />
-      <CheckpointList list={this.state.list} />
+      <CheckpointList list={this.state.list} onErr={this.setErr} />
     </div>)
   }
 }

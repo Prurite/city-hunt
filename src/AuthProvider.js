@@ -1,7 +1,6 @@
 import React from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import useAsyncError from "./AsyncError";
 
 const config = require("./config.json");
 const AuthContext = React.createContext(null);
@@ -10,57 +9,37 @@ export function useAuth() {
   return React.useContext(AuthContext);
 };
 
-export function AuthProvider ({ children }) {
-  const [uid, setUid] = React.useState(localStorage.getItem("uid"));
-  const [type, setType] = React.useState(localStorage.getItem("type"));
-  const [token, setToken] = React.useState(localStorage.getItem("token"));
-  const navigate = useNavigate();
-  
-  if (token)
-    axios.defaults.headers.common["Authorization"] = `bearer ${token}`;
+export class AuthProvider extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      uid: localStorage.getItem("uid"),
+      type: localStorage.getItem("type"),
+      token: localStorage.getItem("token"),
+      onLogout: this.handleLogout
+    }
+    if (this.state.token)
+      axios.defaults.headers.common["Authorization"] = `bearer ${this.state.token}`;
+  }
 
-  async function handleLogin(e) {
-    const throwError = useAsyncError();
-    e.preventDefault();
-    const req = {
-      username: e.target.username.value,
-      password: e.target.password.value
-    };
-    axios.post(config.api_path + "/login", req)
-      .then((res) => {
-        const { uid, type, token, err_msg } = res.data;
-        if (!uid)
-          throw Error(err_msg);
-        localStorage.setItem("uid", uid), setUid(uid);
-        localStorage.setItem("type", type), setType(type);
-        localStorage.setItem("token", token), setToken(token);
-        axios.defaults.headers.common["Authorization"] = `bearer ${token}`;
-        navigate('/checkpoints');
-      })
-      .catch((err) => {
-        throwError(err);
-      })
-  };
-
-  function handleLogout() {
-    localStorage.removeItem("uid"), setUid(null);
-    localStorage.removeItem("type"), setType(null);
-    localStorage.removeItem("token"), setToken(null);
+  handleLogout = () => {
+    localStorage.removeItem("uid");
+    localStorage.removeItem("type");
+    localStorage.removeItem("token");
     delete axios.defaults.headers.common["Authorization"];
-    navigate('/login');
-  };
+    this.setState({
+      uid: null, type: null, token: null
+    });
+    window.location.replace('/login');
+  }
 
-  const value = {
-    token, uid, type,
-    onLogin: handleLogin,
-    onLogout: handleLogout
-  };
-
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  render() {
+    return (
+      <AuthContext.Provider value={this.state}>
+        {this.props.children}
+      </AuthContext.Provider>
+    );
+  }
 };
 
 export function ProtectedRoute({ children, types = "" }) {

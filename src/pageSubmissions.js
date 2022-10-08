@@ -1,9 +1,8 @@
 import React, { useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { Card, Button, Form, InputGroup, Col, Row, FloatingLabel }
+import { Alert, Card, Button, Form, InputGroup, Col, Row, FloatingLabel }
   from 'react-bootstrap';
 import io from 'socket.io-client';
-import useAsyncError from './AsyncError';
 import axios from 'axios';
 
 const config = require('./config.json');
@@ -106,19 +105,20 @@ export default function PageSubmissions() {
     checkpoints: [],
     users: []
   })
-  const throwError = useAsyncError();
+  const [err, setErr] = React.useState(null);
 
   useEffect(() => {
     axios.get(config.api_path + '/checkpoints')
       .then((res) => { setList(res.data); })
-      .catch((err) => { throwError(err); });
+      .catch((err) => { setErr(err); window.scrollTo(0, 0); });
     axios.post(config.api_path + '/submissions/query', filter)
       .then((res) => { setSubs(res.data); })
-      .catch((err) => { throwError(err); });
+      .catch((err) => { setErr(err); window.scrollTo(0, 0); });
     socket.on("update", (update) => {
       console.log("Receive update " + update);
       axios.get(config.api_path + '/submissions/query', filter)
-        .then((res) => { setSubs(res.data); });
+        .then((res) => { setSubs(res.data); })
+        .catch((err) => { setErr(err); window.scrollTo(0, 0); });
     })
     return () => socket.off("update");
   }, [])
@@ -143,10 +143,11 @@ export default function PageSubmissions() {
     console.log(newFilter);
     axios.post(config.api_path + '/submissions/query', filter)
       .then((res) => { setSubs(res.data); })
-      .catch((err) => { throwError(err); });
+      .catch((err) => { setErr(err); window.scrollTo(0, 0); });
   }
 
   return (<div className='m-3'>
+    {err && <Alert variant="danger">{err.toString()}</Alert>}
     <SubmissionFilter list={list} handleSubmit={handleSubmit}/>
     {subs.map((value, index) => {
       return <Submission id={value.id} key={value.id} sub={value} />;
