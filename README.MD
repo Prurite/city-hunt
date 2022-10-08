@@ -204,6 +204,13 @@ User related
 	
 7.  GET /logout
 	Reset uid and token
+
+8.  POST /changepassword in json
+	{
+		"uid": "",
+		"old_password": "",
+		"new_password": ""
+	}
 ```
 
 Socket.io
