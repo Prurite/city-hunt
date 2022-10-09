@@ -125,6 +125,12 @@ City Hunt 是由致诚团委组织，面向全校同学开展的活动。活动�
 ### 后端挂载在 `/api` 下
 
 ```
+If an api call fails, it should return
+{
+	"err_msg": "error"
+}
+with a http error code
+
 1.  GET /checkpoints with uid (user id)
     Return checkpoints info in json
     {[{
@@ -199,7 +205,6 @@ User related
 		"uid": "12210101"
 		"token": "xxxxx",
 		"type": "user",
-		"err_msg": ""
 	}
 	
 7.  GET /logout
@@ -211,7 +216,6 @@ User related
 		"old_password": "",
 		"new_password": ""
 	}
-```
 
 Socket.io
 

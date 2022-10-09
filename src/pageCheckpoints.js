@@ -5,7 +5,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { Accordion, Alert, Button, Form, Image, InputGroup } from 'react-bootstrap';
 import io from 'socket.io-client';
 import axios from 'axios';
-import useAsyncError from './AsyncError';
+import handleAxiosError from './AxiosError';
 
 const config = require('./config.json');
 const socket = io({ path: config.api_path + "/socket.io" });
@@ -81,8 +81,7 @@ class Checkpoint extends React.Component {
           window.location.reload(false);
       })
       .catch(err => {
-        this.props.onErr(err);
-        window.scrollTo(0, 0);
+        this.props.onErr(handleAxiosError(err));
       });
   }
 
@@ -185,7 +184,7 @@ export default class PageCheckpoints extends React.Component {
         this.setState({ list: res.data });
       })
       .catch((err) => {
-        this.setState({ err });
+        this.setState({ handleAxiosError(err) });
       })
   }
 
@@ -227,7 +226,7 @@ export default class PageCheckpoints extends React.Component {
           });
         })
         .catch((err) => {
-          this.setState({ err });
+          this.setState({ handleAxiosError(err) });
         });
     })
   }

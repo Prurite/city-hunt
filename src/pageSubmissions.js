@@ -4,6 +4,7 @@ import { Alert, Card, Button, Form, InputGroup, Col, Row, FloatingLabel }
   from 'react-bootstrap';
 import io from 'socket.io-client';
 import axios from 'axios';
+import handleAxiosError from './AxiosError';
 
 const config = require('./config.json');
 const socket = io({ path: config.api_path + "/socket.io" });
@@ -22,7 +23,8 @@ function SubmissionFilter(props) {
         <Col style={{ alignSelf: "center" }}>
           {list.map((value, index) => {
             return <Form.Check defaultChecked inline type="checkbox"
-              name={"G" + value.id} key={"G" + value.id} label={value.id + " " + value.name} />
+              id={"G" + value.id} name={"G" + value.id} key={"G" + value.id}
+              label={value.id + " " + value.name} />
           })}
         </Col>
       </Form.Group>
@@ -30,10 +32,10 @@ function SubmissionFilter(props) {
         <Form.Label column sm={2}>状态</Form.Label>
         <Col style={{ alignSelf: "center" }}>
           <Form.Check defaultChecked inline type="checkbox"
-            name={"pending"} label={states["pending"]} />
+            name={"pending"} id={"pending"} label={states["pending"]} />
           {["accepted", "denied"].map((value, index) => {
             return <Form.Check inline type="checkbox"
-              name={value} key={value} label={states[value]} />
+              name={value} id={value} key={value} label={states[value]} />
           })}
         </Col>
       </Form.Group>
@@ -60,8 +62,11 @@ function SubmissionFilter(props) {
     )
 }
 
-function Submission(props) {
+function Submission({ setErr }) {
   const sub = props.sub;
+  const [bonus, setBonus] = React.useState("");
+  const [fail, setFail] = React.useState("");
+
   let state;
   if (sub.state === "accepted")
     state = "已通过";
@@ -69,11 +74,23 @@ function Submission(props) {
     state = "已拒绝";
   else if (sub.state === "pending")
     state = "待审核";
-  const score = sub.state != "accepted" ? null
-    : <p><strong>得分</strong> {sub.score}
+  const score = sub.state == "accepted"
+    && <p><strong>得分</strong> {sub.score}
     {sub.bonus != 0 ? `(+${sub.bonus})` : ""} </p>;
-  const reason = sub.state != "denied" ? null
-    : <p><strong>拒绝原因</strong> {sub.fail_reason} </p>;
+  const reason = sub.state == "denied"
+    && <p><strong>拒绝原因</strong> {sub.fail_reason} </p>;
+
+  function handleModify(state) {
+    let data = { id: sub.id, state: state };
+    if (state === "accepted")
+      data.bonus = bonus;
+    if (state === "denied")
+      data.fail_reason = fail;
+    axios.post(config.api_path + "/submissions/modify", data)
+      .then((res) => { console.log(res); })
+      .catch((err) => { setErr(handleAxiosError(err)); })
+  }
+
   return (<Card className="my-3">
     <Card.Header>{ "组 " + sub.user + " 点 " + sub.checkpoint}</Card.Header>
     <Card.Img src={config.upload_image_path + "/" + sub.photo} style={{height: "18rem"}}/>
@@ -82,14 +99,16 @@ function Submission(props) {
       <p><strong>状态</strong> {state}</p>
       {score}
       {reason}
-      <Form>
+      <Form onSubmit={e => e.preventDefault()}>
         <InputGroup className="mb-3">
-          <Form.Control placeholder="附加分" />
-          <Button variant="success">通过</Button>
+          <Form.Control placeholder="附加分" id="bonus"
+            value={bonus} onChange={e => setBonus(e.target.value)} />
+          <Button variant="success" onClick={() => handleModify("accepted")}>通过</Button>
         </InputGroup>
         <InputGroup className="mb-3">
-          <Form.Control placeholder="拒绝原因" />
-          <Button variant="danger">拒绝</Button>
+          <Form.Control placeholder="拒绝原因" id="fail_reason"
+            value={fail} onChange={e => setFail(e.target.value)} />
+          <Button variant="danger" onClick={() => handleModify("denied")}>拒绝</Button>
         </InputGroup>
       </Form>
     </Card.Body>
@@ -110,15 +129,15 @@ export default function PageSubmissions() {
   useEffect(() => {
     axios.get(config.api_path + '/checkpoints')
       .then((res) => { setList(res.data); })
-      .catch((err) => { setErr(err); window.scrollTo(0, 0); });
+      .catch((err) => { setErr(handleAxiosError(err)); });
     axios.post(config.api_path + '/submissions/query', filter)
       .then((res) => { setSubs(res.data); })
-      .catch((err) => { setErr(err); window.scrollTo(0, 0); });
+      .catch((err) => { setErr(handleAxiosError(err)); });
     socket.on("update", (update) => {
       console.log("Receive update " + update);
       axios.get(config.api_path + '/submissions/query', filter)
         .then((res) => { setSubs(res.data); })
-        .catch((err) => { setErr(err); window.scrollTo(0, 0); });
+        .catch((err) => { setErr(handleAxiosError(err)); });
     })
     return () => socket.off("update");
   }, [])
@@ -143,14 +162,14 @@ export default function PageSubmissions() {
     console.log(newFilter);
     axios.post(config.api_path + '/submissions/query', filter)
       .then((res) => { setSubs(res.data); })
-      .catch((err) => { setErr(err); window.scrollTo(0, 0); });
+      .catch((err) => { setErr(handleAxiosError(err)); });
   }
 
   return (<div className='m-3'>
     {err && <Alert variant="danger">{err.toString()}</Alert>}
     <SubmissionFilter list={list} handleSubmit={handleSubmit}/>
     {subs.map((value, index) => {
-      return <Submission id={value.id} key={value.id} sub={value} />;
+      return <Submission id={value.id} key={value.id} sub={value} setErr={setErr} />;
     })}
-  </div>)
+  </div>);
 }
