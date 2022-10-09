@@ -184,7 +184,7 @@ export default class PageCheckpoints extends React.Component {
         this.setState({ list: res.data });
       })
       .catch((err) => {
-        this.setState({ handleAxiosError(err) });
+        this.setState({ err: handleAxiosError(err) });
       })
   }
 
@@ -226,7 +226,7 @@ export default class PageCheckpoints extends React.Component {
           });
         })
         .catch((err) => {
-          this.setState({ handleAxiosError(err) });
+          this.setState({ err: handleAxiosError(err) });
         });
     })
   }

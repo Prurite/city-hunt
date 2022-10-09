@@ -164,6 +164,10 @@ with a http error code
     
 3.  POST /submit/:checkpointid in img file with uid
 	Create/Update submission, update all related ones and return result
+	Return
+	{
+		"message": "success"
+	}
 	
 4. 	POST /submissions/query in json
 	{
@@ -190,6 +194,10 @@ with a http error code
 	}
 	Change submission, update all related ones and return result
 	Unchanged fields may not be in the request.
+	Return
+	{
+		"message": "success"
+	}
 ```
 
 User related
@@ -209,12 +217,20 @@ User related
 	
 7.  GET /logout
 	Reset uid and token
+	Return
+	{
+		"message": "success"
+	}
 
 8.  POST /changepassword in json
 	{
 		"uid": "",
 		"old_password": "",
 		"new_password": ""
+	}
+	Return
+	{
+		"message": "success"
 	}
 
 Socket.io
