@@ -62,8 +62,7 @@ function SubmissionFilter(props) {
     )
 }
 
-function Submission({ setErr }) {
-  const sub = props.sub;
+function Submission({ sub, setErr }) {
   const [bonus, setBonus] = React.useState("");
   const [fail, setFail] = React.useState("");
 
