@@ -4,7 +4,7 @@ import { Alert, Card, Button, Form, InputGroup, Col, Row, FloatingLabel }
   from 'react-bootstrap';
 import io from 'socket.io-client';
 import axios from 'axios';
-import handleAxiosError from './AxiosError';
+import handleApiError from './AxiosError';
 
 const config = require('./config.json');
 const socket = io({ path: config.api_path + "/socket.io" });
@@ -87,11 +87,11 @@ function Submission({ sub, setErr }) {
       data.fail_reason = fail;
     axios.post(config.api_path + "/submissions/modify", data)
       .then((res) => { console.log(res); })
-      .catch((err) => { setErr(handleAxiosError(err)); })
+      .catch((err) => { setErr(handleApiError(err)); })
   }
 
   return (<Card className="my-3">
-    <Card.Header>{ "组 " + sub.user + " 点 " + sub.checkpoint}</Card.Header>
+    <Card.Header>{ "组 " + sub.uid+ " 点 " + sub.checkpoint}</Card.Header>
     <Card.Img src={config.upload_image_path + "/" + sub.photo} style={{height: "18rem"}}/>
     <Card.Body>
       <p><strong>打卡时间</strong> {sub.uploaded_time}</p>
@@ -128,15 +128,15 @@ export default function PageSubmissions() {
   useEffect(() => {
     axios.get(config.api_path + '/checkpoints')
       .then((res) => { setList(res.data); })
-      .catch((err) => { setErr(handleAxiosError(err)); });
+      .catch((err) => { setErr(handleApiError(err)); });
     axios.post(config.api_path + '/submissions/query', filter)
       .then((res) => { setSubs(res.data); })
-      .catch((err) => { setErr(handleAxiosError(err)); });
+      .catch((err) => { setErr(handleApiError(err)); });
     socket.on("update", (update) => {
       console.log("Receive update " + update);
       axios.get(config.api_path + '/submissions/query', filter)
         .then((res) => { setSubs(res.data); })
-        .catch((err) => { setErr(handleAxiosError(err)); });
+        .catch((err) => { setErr(handleApiError(err)); });
     })
     return () => socket.off("update");
   }, [])
@@ -147,7 +147,7 @@ export default function PageSubmissions() {
       checkpointGroups: [],
       states: [],
       checkpoints: [],
-      users: []
+      uids: []
     };
     for (let i of list)
       if (e.target["G" + i.id].checked)
@@ -155,13 +155,13 @@ export default function PageSubmissions() {
     for (let i of ["pending", "accepted", "denied"])
       if (e.target[i].checked)
         newFilter.states.push(i);
-    newFilter.users = e.target.uids.value.replace(/\s+/g, '').split(',');
+    newFilter.uids = e.target.uids.value.replace(/\s+/g, '').split(',');
     newFilter.checkpoints = e.target.pointids.value.replace(/\s+/g, '').split(',');
     setFilter(newFilter);
     console.log(newFilter);
     axios.post(config.api_path + '/submissions/query', filter)
       .then((res) => { setSubs(res.data); })
-      .catch((err) => { setErr(handleAxiosError(err)); });
+      .catch((err) => { setErr(handleApiError(err)); });
   }
 
   return (<div className='m-3'>

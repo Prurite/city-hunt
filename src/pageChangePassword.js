@@ -3,7 +3,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { Alert, Button, Form, FloatingLabel }
   from 'react-bootstrap';
 import { useAuth } from "./AuthProvider";
-import handleAxiosError from './AxiosError';
+import handleApiError from './AxiosError';
 import axios from 'axios';
 const config = require("./config.json")
 
@@ -32,7 +32,7 @@ export default function PageChangePassword(props) {
           alert(res.data.message);
       })
       .catch((err) => {
-        setErr(handleAxiosError(err));
+        setErr(handleApiError(err));
       })
   }
 

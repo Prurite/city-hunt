@@ -3,7 +3,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { Alert, Button, Form, FloatingLabel }
   from 'react-bootstrap';
 import axios from 'axios';
-import handleAxiosError from './AxiosError';
+import handleApiError from './AxiosError';
 const config = require("./config.json");
 
 export default function PageLogin() {
@@ -26,7 +26,7 @@ export default function PageLogin() {
         window.location.replace('/checkpoints');
       })
       .catch((err) => {
-        setError(handleAxiosError(err));
+        setError(handleApiError(err));
       })
   };
 

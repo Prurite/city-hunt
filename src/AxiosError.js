@@ -1,4 +1,4 @@
-export default function handleAxiosError(err) {
+export default function handleApiError(err) {
   window.scrollTo(0, 0);
   if (err.response) {
     const res = err.response;
