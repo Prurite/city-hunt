@@ -69,11 +69,21 @@ class Checkpoint extends React.Component {
 
   handleSubmit = (e) => {
     e.preventDefault();
-    console.log(this.state.selectedFile);
+    const photo = this.state.selectedFile;
+    console.log(photo);
+    var ext = photo.name.match(/\.([^\.]+)$/)[1];
+    if (ext != "jpg" && ext != "png") {
+      this.props.onErr("无效的文件类型");
+      return;
+    }
+    if (photo.size > 10 * 1048576) {
+      this.props.onErr("文件大小超过 10MB");
+      return;
+    }
     const data = new FormData();
-    data.append('file', this.state.selectedFile);
-    console.log(this.state.selectedFile);
-    let url = config.api_path + "/submit/" + this.props.point.id;
+    data.append('photo', photo);
+    data.append('checkpointid', this.props.point.id);
+    let url = config.api_path + "/submit";
     axios.post(url, data)
       .then(res => {
         console.log(res);
@@ -125,7 +135,7 @@ class Checkpoint extends React.Component {
         </p>
         {point.state != "accepted" &&
         <Form onChange={this.handleInputChange} onSubmit={this.handleSubmit}> <InputGroup>
-          <Form.Control type="file" />
+          <Form.Control type="file" accept="image/*" />
           <Button variant="primary" id={"B" + point.id} type="submit">
             {point.state ? "重新上传" : "上传"}
           </Button>
@@ -206,28 +216,30 @@ export default class PageCheckpoints extends React.Component {
 
     socket.on('update', (update) => {
       console.log("Receive update " + update);
-      axios.get(config.api_path + '/checkpoint/' + update)
-        .then((res) => {
-          const newPoint = res.data;
-          let newList = this.state.list.slice();
-          let newAlert = null;
-          for (let i = 0; i < newList.length; i++)
-            for (let j = 0; j < newList[i].points.length; j++)
-              if (newList[i].points[j].id === newPoint.id) {
-                if (newList[i].points[j].state !== newPoint.state)
-                  newAlert = "打卡点 " + newPoint.id + " 的状态已从 " +
-                    stateText(newList[i].points[j].state) +
-                    " 变为 " + stateText(newPoint.state);
-                newList[i].points[j] = newPoint;
-              }
-          this.setState({
-            list: newList,
-            alerts: newAlert ? this.state.alerts.concat(newAlert) : alerts
-          });
-        })
-        .catch((err) => {
-          this.setState({ err: handleApiError(err) });
-        });
+      setTimeout(() =>
+        axios.get(config.api_path + '/checkpoint/' + update)
+          .then((res) => {
+            const newPoint = res.data;
+            let newList = this.state.list.slice();
+            let newAlert = null;
+            for (let i = 0; i < newList.length; i++)
+              for (let j = 0; j < newList[i].points.length; j++)
+                if (newList[i].points[j].id === newPoint.id) {
+                  if (newList[i].points[j].state !== newPoint.state)
+                    newAlert = "打卡点 " + newPoint.id + " 的状态已从 " +
+                      stateText(newList[i].points[j].state) +
+                      " 变为 " + stateText(newPoint.state);
+                  newList[i].points[j] = newPoint;
+                }
+            this.setState({
+              list: newList,
+              alerts: newAlert ? this.state.alerts.concat(newAlert) : this.state.alerts
+            });
+          })
+          .catch((err) => {
+            this.setState({ err: handleApiError(err) });
+          }),
+        1000);
     })
   }
 

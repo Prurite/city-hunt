@@ -75,7 +75,7 @@ function Submission({ sub, setErr }) {
     state = "待审核";
   const score = sub.state == "accepted"
     && <p><strong>得分</strong> {sub.score}
-    {sub.bonus != 0 ? `(+${sub.bonus})` : ""} </p>;
+    {sub.bonus ? `(+${sub.bonus})` : ""} </p>;
   const reason = sub.state == "denied"
     && <p><strong>拒绝原因</strong> {sub.fail_reason} </p>;
 
@@ -85,13 +85,13 @@ function Submission({ sub, setErr }) {
       data.bonus = bonus;
     if (state === "denied")
       data.fail_reason = fail;
-    axios.post(config.api_path + "/submissions/modify", data)
+    axios.post(config.api_path + "/submission/modify", data)
       .then((res) => { console.log(res); })
       .catch((err) => { setErr(handleApiError(err)); })
   }
 
   return (<Card className="my-3">
-    <Card.Header>{ "组 " + sub.uid+ " 点 " + sub.checkpoint}</Card.Header>
+    <Card.Header>{ "组 " + sub.uid+ " 点 " + sub.checkpointid}</Card.Header>
     <Card.Img src={config.upload_image_path + "/" + sub.photo} style={{height: "18rem"}}/>
     <Card.Body>
       <p><strong>打卡时间</strong> {sub.uploaded_time}</p>
@@ -118,8 +118,8 @@ export default function PageSubmissions() {
   const [list, setList] = React.useState([]);
   const [subs, setSubs] = React.useState([]);
   const [filter, setFilter] = React.useState({
-    checkpointGroups: [],
-    states: [],
+    checkpointgroups: [],
+    states: ["pending"],
     checkpoints: [],
     users: []
   })
@@ -129,39 +129,40 @@ export default function PageSubmissions() {
     axios.get(config.api_path + '/checkpoints')
       .then((res) => { setList(res.data); })
       .catch((err) => { setErr(handleApiError(err)); });
+  }, [])
+
+  useEffect(() => {
     axios.post(config.api_path + '/submissions/query', filter)
       .then((res) => { setSubs(res.data); })
       .catch((err) => { setErr(handleApiError(err)); });
     socket.on("update", (update) => {
       console.log("Receive update " + update);
-      axios.get(config.api_path + '/submissions/query', filter)
-        .then((res) => { setSubs(res.data); })
-        .catch((err) => { setErr(handleApiError(err)); });
-    })
+      setTimeout(() =>
+        axios.post(config.api_path + '/submissions/query', filter)
+          .then((res) => { setSubs(res.data); })
+          .catch((err) => { setErr(handleApiError(err)); }),
+        1000);
+    });
     return () => socket.off("update");
-  }, [])
+  }, [filter]);
 
   function handleSubmit(e) {
     e.preventDefault();
     let newFilter = {
-      checkpointGroups: [],
+      checkpointgroups: [],
       states: [],
-      checkpoints: [],
-      uids: []
     };
     for (let i of list)
       if (e.target["G" + i.id].checked)
-        newFilter.checkpointGroups.push(i.id);
+        newFilter.checkpointgroups.push(i.id);
     for (let i of ["pending", "accepted", "denied"])
       if (e.target[i].checked)
         newFilter.states.push(i);
-    newFilter.uids = e.target.uids.value.replace(/\s+/g, '').split(',');
-    newFilter.checkpoints = e.target.pointids.value.replace(/\s+/g, '').split(',');
+    if (e.target.uids.value)
+      newFilter.uids = e.target.uids.value.replace(/\s+/g, '').split(',');
+    if (e.target.pointids.value)
+      newFilter.checkpoints = e.target.pointids.value.replace(/\s+/g, '').split(',');
     setFilter(newFilter);
-    console.log(newFilter);
-    axios.post(config.api_path + '/submissions/query', filter)
-      .then((res) => { setSubs(res.data); })
-      .catch((err) => { setErr(handleApiError(err)); });
   }
 
   return (<div className='m-3'>

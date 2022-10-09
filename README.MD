@@ -171,15 +171,15 @@ with a http error code
 	
 4. 	POST /submissions/query in json
 	{
-		"checkpointGroups": ["1"],
+		"checkpointgroups": ["1"],
 		"checkpoints": ["1-1"],
-		"users": ["12210101"],
+		"uids": ["12210101"],
 		"states": ["pending"]
 	}
 	Return matching submissions in json
 	[{
 		"id": "U12210101-P1-1"
-		"checkpoint": "1-1",
+		"checkpointid": "1-1",
 		"user": "12210101",
 		"photo": "U12210101-P1-1.jpg",
 		"state": "pending",
@@ -253,19 +253,22 @@ Static files
 
 ```js
 const submissionSchema = new Schema({
-	checkpoint: String, // Checkpoint id
-    user: String, // User id
-    photo: String, // Photo name (generate from the 2 ids like above)
-    uploaded: {type: Date, default: Date.now() }, // time
-    state: {type: String, enum:["pending", "accepted", "denied"], required: true },
-	score: Number,
-    bonus: Number
+	id: {type: String, required: true},
+	checkpointgroup: {type: String, required: true},
+  checkpointid: {type: String, required: true },
+  uid: {type: String, required: true },
+  photo: {type: String, required: true },
+  uploaded: {type: Date, default: Date.now(), required: true },
+  state: {type: String, enum:["pending", "accepted", "denied"], required: true },
+  score: Number,
+  bonus: Number,
+  fail_reason: String
 })
 
 const userSchema = new Schema({
-    uid: String,
+  uid: String,
 	type: String,
-    password: String
+  password: String
 })
 ```
 
