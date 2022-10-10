@@ -72,8 +72,8 @@ class Checkpoint extends React.Component {
     const photo = this.state.selectedFile;
     console.log(photo);
     var ext = photo.name.match(/\.([^\.]+)$/)[1];
-    if (ext != "jpg" && ext != "png") {
-      this.props.onErr("无效的文件类型");
+    if (ext != "jpg" && ext != "jpeg") {
+      this.props.onErr("无效的文件类型 " + ext);
       return;
     }
     if (photo.size > 10 * 1048576) {
@@ -198,6 +198,11 @@ export default class PageCheckpoints extends React.Component {
       })
   }
 
+  addAlert = (alert) => {
+    this.state.alerts = [alert].concat(this.state.alerts);
+    window.scrollTo(0, 0);
+  }
+
   setErr = (err) => {
     this.setState({ err });
   }
@@ -233,8 +238,9 @@ export default class PageCheckpoints extends React.Component {
                 }
             this.setState({
               list: newList,
-              alerts: newAlert ? this.state.alerts.concat(newAlert) : this.state.alerts
             });
+            if (newAlert)
+              this.addAlert(newAlert);
           })
           .catch((err) => {
             this.setState({ err: handleApiError(err) });

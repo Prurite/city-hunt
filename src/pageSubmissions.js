@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { Alert, Card, Button, Form, InputGroup, Col, Row, FloatingLabel }
+import { Alert, Card, Image, Button, Form, InputGroup, Col, Row, FloatingLabel }
   from 'react-bootstrap';
 import io from 'socket.io-client';
 import axios from 'axios';
@@ -92,7 +92,7 @@ function Submission({ sub, setErr }) {
 
   return (<Card className="my-3">
     <Card.Header>{ "组 " + sub.uid+ " 点 " + sub.checkpointid}</Card.Header>
-    <Card.Img src={config.upload_image_path + "/" + sub.photo} style={{height: "18rem"}}/>
+    <Image fluid src={config.upload_image_path + "/" + sub.photo} />
     <Card.Body>
       <p><strong>打卡时间</strong> {sub.uploaded_time}</p>
       <p><strong>状态</strong> {state}</p>
