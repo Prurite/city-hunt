@@ -119,11 +119,12 @@ export default function PageSubmissions() {
   const [subs, setSubs] = React.useState([]);
   const [filter, setFilter] = React.useState({
     checkpointgroups: [],
-    states: ["pending"],
+    states: [],
     checkpoints: [],
     users: []
   })
   const [err, setErr] = React.useState(null);
+  const audio = React.useMemo(() => new Audio(process.env.PUBLIC_URL + "/sound.wav"), []);
 
   useEffect(() => {
     axios.get(config.api_path + '/checkpoints')
@@ -137,6 +138,7 @@ export default function PageSubmissions() {
       .catch((err) => { setErr(handleApiError(err)); });
     socket.on("update", (update) => {
       console.log("Receive update " + update);
+      audio.play();
       setTimeout(() =>
         axios.post(config.api_path + '/submissions/query', filter)
           .then((res) => { setSubs(res.data); })

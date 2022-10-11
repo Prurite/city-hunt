@@ -109,9 +109,7 @@ class Checkpoint extends React.Component {
       ? <p><strong>我的打卡时间</strong> {point.uploaded_time}</p>
       : null;
     let myState = null;
-    if (point.state === "pending")
-      myState = <p> <strong>我的预计得分</strong> {point.score} </p>
-    else if (point.state === "accepted")
+    if (point.state === "accepted")
       myState = <p> <strong>我的得分</strong> {point.score} </p>
     else if (point.state === "denied")
       myState = <p> <strong>我的不通过原因</strong> {point.fail_reason} </p>
