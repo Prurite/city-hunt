@@ -138,15 +138,18 @@ export default function PageSubmissions() {
       .catch((err) => { setErr(handleApiError(err)); });
     socket.on("update", (update) => {
       console.log("Receive update " + update);
-      audio.play();
       setTimeout(() =>
         axios.post(config.api_path + '/submissions/query', filter)
           .then((res) => { setSubs(res.data); })
           .catch((err) => { setErr(handleApiError(err)); }),
-        1000);
+        200);
     });
     return () => socket.off("update");
   }, [filter]);
+
+  useEffect(() => {
+    audio.play();
+  }, [subs]);
 
   function handleSubmit(e) {
     e.preventDefault();

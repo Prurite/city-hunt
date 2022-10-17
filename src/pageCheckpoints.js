@@ -37,9 +37,9 @@ function CheckpointState (props) {
   if (state === "pending")
     return <span className="checkpointState"><i className="fa fa-spinner" /> 待审核</span>;
   else if (state === "accepted")
-    return <span className="checkpointState"><i className="fa fa-check" /> 已通过</span>;
+    return <span className="checkpointState" style={{ color: "green" }}><i className="fa fa-check" /> 已通过</span>;
   else if (state === "denied")
-    return <span className="checkpointState"><i className="fa fa-times" /> 未通过</span>;
+    return <span className="checkpointState" style={{ color: "red" }}><i className="fa fa-times" /> 未通过</span>;
   else
     return <span className="checkpointState"><i className="fa fa-bars" /> 未打卡</span>
 }
@@ -50,6 +50,7 @@ class Checkpoint extends React.Component {
     this.state = {
       images: false,
       photo: false,
+      disabled: false,
       selectedFile: ''
     }
   }
@@ -69,6 +70,7 @@ class Checkpoint extends React.Component {
 
   handleSubmit = (e) => {
     e.preventDefault();
+    this.setState({ disabled: true });
     const photo = this.state.selectedFile;
     console.log(photo);
     var ext = photo.name.match(/\.([^\.]+)$/)[1];
@@ -134,7 +136,7 @@ class Checkpoint extends React.Component {
         {point.state != "accepted" &&
         <Form onChange={this.handleInputChange} onSubmit={this.handleSubmit}> <InputGroup>
           <Form.Control type="file" accept="image/*" />
-          <Button variant="primary" id={"B" + point.id} type="submit">
+          <Button disabled={this.state.disabled} variant="primary" id={"B" + point.id} type="submit">
             {point.state ? "重新上传" : "上传"}
           </Button>
         </InputGroup> </Form>}
