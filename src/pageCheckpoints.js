@@ -1,13 +1,13 @@
-import React from 'react';
-import Parser from 'html-react-parser';
-import 'font-awesome/css/font-awesome.min.css';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import { Accordion, Alert, Button, Form, Image, InputGroup } from 'react-bootstrap';
-import io from 'socket.io-client';
-import axios from 'axios';
-import handleApiError from './AxiosError';
+import React from "react";
+import Parser from "html-react-parser";
+import "font-awesome/css/font-awesome.min.css";
+import "bootstrap/dist/css/bootstrap.min.css";
+import { Accordion, Alert, Button, Form, Image, InputGroup } from "react-bootstrap";
+import io from "socket.io-client";
+import axios from "axios";
+import handleApiError from "./AxiosError";
 
-const config = require('./config.json');
+const config = require("./config.json");
 const socket = io({ path: config.api_path + "/socket.io" });
 
 function CheckpointDetails (props) {
@@ -51,7 +51,7 @@ class Checkpoint extends React.Component {
       images: false,
       photo: false,
       disabled: false,
-      selectedFile: ''
+      selectedFile: ""
     }
   }
   
@@ -83,8 +83,8 @@ class Checkpoint extends React.Component {
       return;
     }
     const data = new FormData();
-    data.append('photo', photo);
-    data.append('checkpointid', this.props.point.id);
+    data.append("photo", photo);
+    data.append("checkpointid", this.props.point.id);
     let url = config.api_path + "/submit";
     axios.post(url, data)
       .then(res => {
@@ -122,9 +122,12 @@ class Checkpoint extends React.Component {
       <Accordion.Body>
         <p>
           <strong style={{marginRight: "1rem"}}>点位信息</strong>
-          <Button variant="primary" id={"D" + point.id} onClick={() => { this.toggleImages() }}>
-            {imagesButtonText}
-          </Button>
+          { point.images.length
+            ? <Button variant="primary" id={"D" + point.id} onClick={() => { this.toggleImages() }}>
+              {imagesButtonText}
+            </Button>
+            : null
+          }
         </p>
         <CheckpointDetails point={point} images={this.state.images} />
         <p />
@@ -182,19 +185,21 @@ function AlertList(props) {
 }
 
 export default class PageCheckpoints extends React.Component {
+  audio = new Audio(process.env.PUBLIC_URL + "/sound.wav");
+
   constructor(props) {
     super(props);
     this.state = {
-      err: null,
+      err: {},
       alerts: [],
       list: []
     }
-    axios.get(config.api_path + '/checkpoints')
+    axios.get(config.api_path + "/checkpoints")
       .then((res) => {
         this.setState({ list: res.data });
       })
       .catch((err) => {
-        this.setState({ err: handleApiError(err) });
+        this.setState({ err: { ...this.state.err, apiErr: handleApiError(err) } });
       })
   }
 
@@ -218,11 +223,10 @@ export default class PageCheckpoints extends React.Component {
       };
       return text[state];
     }
-
-    socket.on('update', (update) => {
+    socket.on("update", (update) => {
       console.log("Receive update " + update);
       setTimeout(() =>
-        axios.get(config.api_path + '/checkpoint/' + update)
+        axios.get(config.api_path + "/checkpoint/" + update)
           .then((res) => {
             const newPoint = res.data;
             let newList = this.state.list.slice();
@@ -239,18 +243,35 @@ export default class PageCheckpoints extends React.Component {
             this.setState({
               list: newList,
             });
-            if (newAlert)
+            if (newAlert) {
+              this.audio.play();
               this.addAlert(newAlert);
+            }
           })
           .catch((err) => {
-            this.setState({ err: handleApiError(err) });
+            this.setState({ err: { ...this.state.err, apiErr: handleApiError(err) } });
           }),
-        1000);
+        200);
+    });
+    socket.on("disconnect", (err) => {
+      console.log("Socket disconnected");
+      this.setState({ err: {
+        ...this.state.err,
+        socketErr: "与服务器的连接断开：" + err.toString() + "\n请刷新页面。"
+      } });
+      window.scrollTo(0, 0);
+    });
+    socket.on("error", (err) => {
+      console.log("Socket encountered an error");
+      this.setState({ err: {
+        ...this.state.err,
+        socketErr: "与服务器的连接遇到问题：" + err.toString()
+      } });
     })
   }
 
   componentWillUnmount() {
-    socket.off('update');
+    socket.off("update");
   }
 
   removeAlert(alert) {
@@ -258,9 +279,17 @@ export default class PageCheckpoints extends React.Component {
     this.setState({alerts: newAlerts});
   }
 
+  renderErr() {
+    let res = [];
+    for (let i in this.state.err)
+      if (this.state.err[i])
+        res.push(<Alert variant="danger">{this.state.err[i].toString()}</Alert>);
+    return res;
+  }
+
   render() {
-    return (<div className='m-3'>
-      {this.state.err && <Alert variant="danger">{this.state.err.toString()}</Alert>}
+    return (<div className="m-3">
+      {this.renderErr()}
       <AlertList alerts={this.state.alerts} removeAlert={(x) => this.removeAlert(x)} />
       <CheckpointList list={this.state.list} onErr={this.setErr} />
     </div>)

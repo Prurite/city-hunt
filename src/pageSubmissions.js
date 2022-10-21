@@ -1,12 +1,12 @@
-import React, { useEffect } from 'react';
-import 'bootstrap/dist/css/bootstrap.min.css';
+import React, { useEffect } from "react";
+import "bootstrap/dist/css/bootstrap.min.css";
 import { Alert, Card, Image, Button, Form, InputGroup, Col, Row, FloatingLabel }
-  from 'react-bootstrap';
-import io from 'socket.io-client';
-import axios from 'axios';
-import handleApiError from './AxiosError';
+  from "react-bootstrap";
+import io from "socket.io-client";
+import axios from "axios";
+import handleApiError from "./AxiosError";
 
-const config = require('./config.json');
+const config = require("./config.json");
 const socket = io({ path: config.api_path + "/socket.io" });
 
 function SubmissionFilter(props) {
@@ -57,8 +57,8 @@ function SubmissionFilter(props) {
           </FloatingLabel>
         </Col>
       </Form.Group>
-      <Button type="submit">过滤</Button>
-    </Form> </Card >
+      <Button type="submit">{props.buttext}</Button>
+    </Form> </Card>
     )
 }
 
@@ -122,29 +122,47 @@ export default function PageSubmissions() {
     states: [],
     checkpoints: [],
     users: []
-  })
+  });
+  const [buttext, setButtext] = React.useState("开始接收提交");
   const [err, setErr] = React.useState(null);
+  const [socketErr, setSocketErr] = React.useState(null);
   const audio = React.useMemo(() => new Audio(process.env.PUBLIC_URL + "/sound.wav"), []);
+  const siren = React.useMemo(() => new Audio(process.env.PUBLIC_URL + "/siren.wav"), []);
 
   useEffect(() => {
-    axios.get(config.api_path + '/checkpoints')
+    axios.get(config.api_path + "/checkpoints")
       .then((res) => { setList(res.data); })
       .catch((err) => { setErr(handleApiError(err)); });
   }, [])
 
   useEffect(() => {
-    axios.post(config.api_path + '/submissions/query', filter)
+    axios.post(config.api_path + "/submissions/query", filter)
       .then((res) => { setSubs(res.data); })
       .catch((err) => { setErr(handleApiError(err)); });
     socket.on("update", (update) => {
       console.log("Receive update " + update);
       setTimeout(() =>
-        axios.post(config.api_path + '/submissions/query', filter)
+        axios.post(config.api_path + "/submissions/query", filter)
           .then((res) => { setSubs(res.data); })
           .catch((err) => { setErr(handleApiError(err)); }),
         200);
     });
-    return () => socket.off("update");
+    socket.on("disconnect", (err) => {
+      console.log("Socket disconnected");
+      setSocketErr("与服务器的连接断开：" + err.toString() + "\n请刷新页面。");
+      window.scrollTo(0, 0);
+      siren.play();
+    });
+    socket.on("error", (err) => {
+      console.log("Socket encountered an error");
+      setSocketErr("与服务器的连接遇到问题：" + err.toString());
+      siren.play();
+    });
+    return () => {
+      socket.off("update");
+      socket.off("disconnect");
+      socket.off("error");
+    };
   }, [filter]);
 
   useEffect(() => {
@@ -153,6 +171,7 @@ export default function PageSubmissions() {
 
   function handleSubmit(e) {
     e.preventDefault();
+    setButtext("过滤");
     let newFilter = {
       checkpointgroups: [],
       states: [],
@@ -164,15 +183,16 @@ export default function PageSubmissions() {
       if (e.target[i].checked)
         newFilter.states.push(i);
     if (e.target.uids.value)
-      newFilter.uids = e.target.uids.value.replace(/\s+/g, '').split(',');
+      newFilter.uids = e.target.uids.value.replace(/\s+/g, "").split(",");
     if (e.target.pointids.value)
-      newFilter.checkpoints = e.target.pointids.value.replace(/\s+/g, '').split(',');
+      newFilter.checkpoints = e.target.pointids.value.replace(/\s+/g, "").split(",");
     setFilter(newFilter);
   }
 
-  return (<div className='m-3'>
+  return (<div className="m-3">
     {err && <Alert variant="danger">{err.toString()}</Alert>}
-    <SubmissionFilter list={list} handleSubmit={handleSubmit}/>
+    {socketErr && <Alert variant="danger">{socketErr.toString()}</Alert>}
+    <SubmissionFilter list={list} handleSubmit={handleSubmit} buttext={buttext}/>
     {subs.map((value, index) => {
       return <Submission id={value.id} key={value.id} sub={value} setErr={setErr} />;
     })}
