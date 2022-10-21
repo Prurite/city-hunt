@@ -76,10 +76,12 @@ class Checkpoint extends React.Component {
     var ext = photo.name.match(/\.([^\.]+)$/)[1];
     if (ext != "jpg" && ext != "jpeg") {
       this.props.onErr("无效的文件类型 " + ext);
+      this.setState({ disabled: false });
       return;
     }
     if (photo.size > 10 * 1048576) {
       this.props.onErr("文件大小超过 10MB");
+      this.setState({ disabled: false });
       return;
     }
     const data = new FormData();
@@ -90,10 +92,12 @@ class Checkpoint extends React.Component {
       .then(res => {
         console.log(res);
         if (res.status == "200")
-          window.location.reload(false);
+          this.props.addAlert("打卡点 " + this.props.point.id + " 的打卡图片上传成功");
+        this.setState({ disabled: false });
       })
       .catch(err => {
         this.props.onErr(handleApiError(err));
+        this.setState({ disabled: false });
       });
   }
 
@@ -151,9 +155,9 @@ class Checkpoint extends React.Component {
   }
 }
 
-function CheckpointGroup ({ group, onErr }) {
+function CheckpointGroup ({ group, onErr, addAlert }) {
   const checkpoints = group.points.map((value, index) => {
-    return <Checkpoint key={value.id} point={value} onErr={onErr} />;
+    return <Checkpoint key={value.id} point={value} onErr={onErr} addAlert={addAlert} />;
   })
   return (<Accordion.Item eventKey={"G" + group.id}>
     <Accordion.Header>{group.id} {group.name}</Accordion.Header>
@@ -166,9 +170,9 @@ function CheckpointGroup ({ group, onErr }) {
   </Accordion.Item>);
 }
 
-function CheckpointList ({ list, onErr }) {
+function CheckpointList ({ list, onErr, addAlert }) {
   const checkpointGroups = list.map((value, index) => {
-    return <CheckpointGroup key={value.id} group={value} onErr={onErr} />;
+    return <CheckpointGroup key={value.id} group={value} onErr={onErr} addAlert={addAlert} />;
   })
   return <Accordion>{checkpointGroups}</Accordion>;
 }
@@ -186,6 +190,7 @@ function AlertList(props) {
 
 export default class PageCheckpoints extends React.Component {
   audio = new Audio(process.env.PUBLIC_URL + "/sound.wav");
+  siren = new Audio(process.env.PUBLIC_URL + "/siren.wav");
 
   constructor(props) {
     super(props);
@@ -205,11 +210,12 @@ export default class PageCheckpoints extends React.Component {
 
   addAlert = (alert) => {
     this.state.alerts = [alert].concat(this.state.alerts);
+    this.audio.play();
     window.scrollTo(0, 0);
   }
 
   setErr = (err) => {
-    this.setState({ err });
+    this.setState({ err: {...this.state.err, err: err} });
   }
 
   componentDidMount() {
@@ -244,7 +250,6 @@ export default class PageCheckpoints extends React.Component {
               list: newList,
             });
             if (newAlert) {
-              this.audio.play();
               this.addAlert(newAlert);
             }
           })
@@ -259,6 +264,7 @@ export default class PageCheckpoints extends React.Component {
         ...this.state.err,
         socketErr: "与服务器的连接断开：" + err.toString() + "\n请刷新页面。"
       } });
+      this.siren.play();
       window.scrollTo(0, 0);
     });
     socket.on("error", (err) => {
@@ -272,6 +278,8 @@ export default class PageCheckpoints extends React.Component {
 
   componentWillUnmount() {
     socket.off("update");
+    socket.off("disconnect");
+    socket.off("error");
   }
 
   removeAlert(alert) {
@@ -291,7 +299,7 @@ export default class PageCheckpoints extends React.Component {
     return (<div className="m-3">
       {this.renderErr()}
       <AlertList alerts={this.state.alerts} removeAlert={(x) => this.removeAlert(x)} />
-      <CheckpointList list={this.state.list} onErr={this.setErr} />
+      <CheckpointList list={this.state.list} onErr={this.setErr} addAlert={this.addAlert} />
     </div>)
   }
 }
