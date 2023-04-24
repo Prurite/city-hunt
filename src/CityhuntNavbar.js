@@ -12,8 +12,8 @@ export default function MyNavbar() {
     <Navbar.Toggle aria-controls="navbar-nav" />
     <Navbar.Collapse id="navbar-nav">
       <Nav className="me-auto">
-        <Nav.Link href="/submissions">提交</Nav.Link>
-        <Nav.Link href="/checkpoints">打卡点</Nav.Link>
+        <Nav.Link href="/submissions">管理端</Nav.Link>
+        <Nav.Link href="/checkpoints">选手端</Nav.Link>
       </Nav>
       <Nav className="justify-content-end">
         <NavDropdown title={uid ? uid : "游客"} id="nav-dropdown" >
