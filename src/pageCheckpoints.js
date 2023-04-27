@@ -8,7 +8,7 @@ import axios from "axios";
 import handleApiError from "./AxiosError";
 
 const config = require("./config.json");
-const socket = io({ path: config.api_path + "/socket.io" });
+const socket = io({ path: config.api_path + "/socket.io", transports: ['websocket'] });
 
 function CheckpointDetails (props) {
   function f(text, def) { // strong when not default

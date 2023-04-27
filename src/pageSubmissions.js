@@ -7,7 +7,7 @@ import axios from "axios";
 import handleApiError from "./AxiosError";
 
 const config = require("./config.json");
-const socket = io({ path: config.api_path + "/socket.io" });
+const socket = io({ path: config.api_path + "/socket.io", transports: ['websocket'] });
 
 function SubmissionFilter(props) {
   const list = props.list;
