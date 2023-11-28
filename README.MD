@@ -198,12 +198,25 @@ with a http error code
 	{
 		"message": "success"
 	}
+
+6. GET /alerts with uid
+Return unread alerts in json
+{[
+  {
+	"uid": "12210101",
+	"time": "12:34:56",
+	"content": "Notification"
+  },
+]}
+
+7. POST /alert/delete with the alert
+to remove the according alert
 ```
 
 User related
 
 ```
-6.  POST /login in json
+8.  POST /login in json
 	{
 		"uid": "12210101",
 		"password": "" // hashed
@@ -215,14 +228,14 @@ User related
 		"type": "user",
 	}
 	
-7.  GET /logout
+9.  GET /logout
 	Reset uid and token
 	Return
 	{
 		"message": "success"
 	}
 
-8.  POST /changepassword in json
+10.  POST /changepassword in json
 	{
 		"uid": "",
 		"old_password": "",
@@ -270,6 +283,13 @@ const userSchema = new Schema({
 	type: String,
   password: String
 })
+
+const AlertSchema = new Schema({
+  uid: {type: String, required: true },
+  date: {type: Date, required: true },
+  content: {type: String, required: true }
+})
+
 ```
 
 ### 打卡点信息预配置
@@ -322,6 +342,7 @@ const userSchema = new Schema({
 - [x] 选手端与后端的交互
     - [x] 提交文件
     - [x] 获取打卡点的变更，更新、推送通知
+	- [x] 基于数据库的通知系统
 - [x] 管理端 UI `/submissions`
 - [x] 管理端与后端的交互
     - [x] 点击筛选按钮时，向后端发送包含筛选条件的 json 请求，渲染获取到的提交记录

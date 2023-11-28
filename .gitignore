@@ -3,3 +3,4 @@ yarn.lock
 src/TaskList.json
 src/config.json
 build
+.vscode
