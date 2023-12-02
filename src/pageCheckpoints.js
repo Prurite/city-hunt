@@ -18,7 +18,7 @@ function CheckpointDetails ({ point, show_images }) {
       : "<strong>" + text + "</strong>";
   }
 
-  const dScores = [6, 5, 4, 3]; // default scores
+  const dScores = config.default_scores; // default scores
 
   // Display the scores
   let desc = f(point.scores[0], dScores[0]);
@@ -161,7 +161,7 @@ class Checkpoint extends React.Component {
         </p>
         <CheckpointDetails point={point} show_images={this.state.images} />
         <p />
-        <p> <strong>当前通过人数</strong> {point.passed} </p>
+        <p> <strong>当前通过人数</strong> {point.passed ? point.passed : 0} </p>
         <p>
           <strong>我的打卡图片</strong> {photoAction}
           {this.state.photo ? <Image fluid src={config.upload_image_path + "/" + point.photo} /> : null}
@@ -268,6 +268,13 @@ export default class PageCheckpoints extends React.Component {
     socket.on("update", (update) => {
       console.log("Receive update " + update);
       this.fetchAlerts();
+      axios.get(config.api_path + "/checkpoints")
+        .then((res) => {
+          this.setState({ list: res.data });
+        })
+        .catch((err) => {
+          this.setState({ err: { ...this.state.err, apiErr: handleApiError(err) } });
+        })
     });
 
     socket.on("disconnect", (err) => {
