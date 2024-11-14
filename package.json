@@ -1,19 +1,22 @@
 {
   "name": "cityhunt-react",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "license": "MIT",
   "dependencies": {
-    "axios": "^1.0.0",
-    "bootstrap": "^5.2.2",
+    "axios": "^1.5.1",
+    "bootstrap": "^5.3.2",
     "font-awesome": "^4.7.0",
-    "html-react-parser": "^3.0.4",
+    "html-react-parser": "^5.1.18",
     "react": "^18.2.0",
-    "react-bootstrap": "^2.5.0",
+    "react-bootstrap": "^2.8.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^6.4.1",
+    "react-router-dom": "^6.16.0",
     "react-scripts": "^5.0.1",
-    "socket.io-client": "^4.5.2",
-    "web-vitals": "^3.0.3"
+    "socket.io-client": "^4.7.3",
+    "web-vitals": "^4.2.4"
+  },
+  "devDependencies": {
+      "@babel/plugin-proposal-private-property-in-object": "^7.21.0"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -32,5 +35,6 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  }
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }

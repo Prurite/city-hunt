@@ -322,13 +322,57 @@ const AlertSchema = new Schema({
 ]
 ```
 
-## 项目说明
+打卡点信息 json 为一个由多个打卡点组对象组成的数组。
+
+每个组对象的属性：
+```
+name: 该组的名称。
+desc: 该组的描述。支持 html 标签。
+points: 该组内的打卡点对象数组。
+```
+
+每个打卡点对象的属性：
+```
+id: 该点的 id ，各个点间需要不同。
+name: 该点的名称。
+scores: 得分数组，第 1, 2, 3, ... 名打卡的选手会依次得到所配置的分数。在第 n 名以后打卡的选手会得到第 n 个分数。
+desc: 该组的描述。支持 html 标签。
+images: 该点的图片的文件名列表。
+```
+
+打卡点 id 推荐使用 A-B 模式，A 为分组的编号，B 为组内编号。打卡点的例图文件名推荐与打卡点的 id 相同。
+
+## 项目说明及编译使用
+
+### 前端
 
 本前端系统采用 React 开发。
 
-部署：clone 到本地后 `yarn` & `yarn start`。
+本地调试：
 
-注意运行前将 config_example.json 改为 config.json 并按需修改其中的设置项。
+- 将此项目 clone 到本地
+- `yarn` 安装依赖
+- 将 src/config_example.json 改为 src/config.json 并按需修改其中的设置项
+-  `yarn start` 运行调试服务器
+
+编译为静态文件：`yarn build` ，默认会输出到 build 文件夹下。
+
+注意在中国内地，直接 yarn 可能因为网络问题导致安装依赖失败，可考虑使用代理等方式解决。
+
+### 后端
+
+后端系统基于 express.js 和 MongoDB 开发。后端代码位于 https://github.com/Prurite/city-hunt-backend .
+
+调试及运行：
+
+- Clone 后端的 repo
+- `yarn` 安装依赖
+- 安装数据库（MongoDB v8），可参考 https://www.mongodb.com/zh-cn/docs/manual/installation/ 
+- 创建一个名为 cityhunt 的数据库
+- 如果要将数据库向公网开放，配置好认证及安全设置
+- 将 `config_example.json` 改为 `config.json` 并按需修改其中的设置项
+- 参考*打卡点信息预配置*部分，和 `tasklist_example.json` ，创建 `tasklist.json` ，并在其中配置打卡点信息
+- `node app.js` 运行后端服务器
 
 ## 项目进度
 
