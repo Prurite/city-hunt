@@ -2,12 +2,14 @@
 
 System: Ubuntu 24.04 LTS
 
+The following commands are assumed to be run as `ubuntu` user. It is suggested to setup a proxy to global Internet before starting.
+
 1. Clone github repository. Here we assume they're cloned to `~`:
 
 ```
 cd ~
 sudo apt update
-sudo apt install -y  git
+sudo apt install -y git
 git clone https://github.com/Prurite/city-hunt-backend
 git clone https://github.com/Prurite/city-hunt
 ```
@@ -40,7 +42,7 @@ curl -fsSL https://www.mongodb.org/static/pgp/server-8.0.asc | \
 echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-8.0.gpg ] https://repo.mongodb.org/apt/ubuntu noble/mongodb-org/8.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-8.0.list
 sudo apt update
 sudo apt install -y mongodb-org
-ulimit -f unlimited -t unlimited -v unlimited -l unlimited -n 64000 -m unlimited -u 64000
+sudo bash -c "ulimit -f unlimited -t unlimited -v unlimited -l unlimited -n 64000 -m unlimited -u 64000"
 sudo systemctl enable mongod
 sudo systemctl start mongod
 ```
@@ -52,7 +54,7 @@ sudo systemctl start mongod
    - Install python and requirements.
 
      ```
-     sudo apt install -y python3-full
+     sudo apt install -y python3-full python3-pip
      sudo mv /usr/lib/python3.12/EXTERNALLY-MANAGED /usr/lib/python3.12/EXTERNALLY
      -MANAGED.old
      pip3 install pymongo
@@ -149,11 +151,11 @@ http {
         }
         
         location /images/ {
-            alias /root/cityhunt-images/;
+            alias /home/ubuntu/cityhunt-images/;
         }
 
         location / {
-            root /root/cityhunt-react;
+            root /home/ubuntu/cityhunt-react;
             index index.html;
             try_files $uri $uri/ /index.html =404;
         }
@@ -175,6 +177,13 @@ sudo service nginx restart
 
      ```
      yarn global add pm2
-     cd /root/city-hunt-backend
+     cd /home/ubuntu/city-hunt-backend
+     yarn
      pm2 start ./app.js
      ```
+
+
+
+
+
+问题：检查 sudo；检查用户路径

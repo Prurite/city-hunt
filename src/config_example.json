@@ -1,6 +1,6 @@
 {
     "static_image_path": "/images",
-    "upload_image_path": "/uploads",
+    "upload_image_path": "/api/uploads",
     "api_path": "/api",
     "default_scores": [6, 6, 5, 5, 4, 4, 3, 3]
 }
