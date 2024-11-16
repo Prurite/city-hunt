@@ -96,7 +96,8 @@ class Checkpoint extends React.Component {
     }
     console.log(photo);
     var ext = photo.name.match(/\.([^\.]+)$/)[1];
-    if (ext != "jpg" && ext != "jpeg") {
+    ext = ext.toLowerCase();
+    if (!["jpg", "jpeg", "png", "heic", "heif"].includes(ext)) {
       this.props.onErr("无效的文件类型 " + ext);
       this.setState({ disabled: false });
       return;
@@ -211,7 +212,7 @@ function CheckpointList ({ list, onErr, fetchAlerts }) {
 function AlertsList({ alerts, removeAlert }) {
   return (<>
     { alerts.map((value, index) => {
-      return <Alert key={value} variant="primary" dismissible
+      return <Alert key={value.date} variant="primary" dismissible
         onClose={() => { removeAlert(value) }}>
           {value.time} {value.content}
         </Alert>

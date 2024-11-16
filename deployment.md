@@ -143,21 +143,35 @@ http {
         server_name cityhunt.sieako.com;
 
         location /api/ {
-            proxy_pass http://127.0.0.1:3001/;
+            # Remove /api/ prefix when forwarding to backend
+            rewrite ^/api/(.*) /$1 break;
+            proxy_pass http://127.0.0.1:3001;
             proxy_http_version 1.1;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "Upgrade";
             proxy_read_timeout 600s;
+
+            # By default, don't cache anything
+            add_header Cache-Control "no-store, no-cache, must-revalidate";
+
+            # Cache jpg images for 1 year
+            location ~ \.jpg$ {
+                rewrite ^/api/(.*) /$1 break;
+                proxy_pass http://127.0.0.1:3001;
+                add_header Cache-Control "public, max-age=31536000";
+            }
         }
         
         location /images/ {
             alias /home/ubuntu/cityhunt-images/;
+            add_header Cache-Control "public, max-age=31536000, immutable";
         }
 
         location / {
             root /home/ubuntu/cityhunt-react;
             index index.html;
             try_files $uri $uri/ /index.html =404;
+            add_header Cache-Control "no-cache, no-store, must-revalidate";
         }
     }
 }
@@ -173,10 +187,15 @@ sudo service nginx restart
 
    - Create `config.json` from `config_example.json`
 
-   - Run the backend
+   - Install dependencies
 
      ```
      yarn global add pm2
+     ```
+   
+   - Run the backend
+   
+     ```
      cd /home/ubuntu/city-hunt-backend
      yarn
      pm2 start ./app.js
